@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What I know about Guitars</title>
+    <style>
+        * {
+            font-family: sans-serif;
+        }
+        #btnSection {
+            display: grid;
+            grid-template-columns: repeat(6,3em);
+            grid-auto-flow: dense;
+        }
+        .string0 {
+            grid-column: 1;
+        }
+        .string1 {
+            grid-column: 2;
+        }
+        .string2 {
+            grid-column: 3;
+        }
+        .string3 {
+            grid-column: 4;
+        }
+        .string4 {
+            grid-column: 5;
+        }
+        .string5 {
+            grid-column: 6;
+        }
+        .fretNote {
+            width: 100%;
+            display: flex;
+            padding: 0.15em;
+        }
+        .fretNote input{
+            display: none;
+        }
+        input + label {
+            width: 100%;
+        }
+        input:checked + label {
+            background: blue;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <p>
+    I recently got started with Guitars.
+    <br/>
+    I have many friends who have this skill and are really good at it. Thanks to the pendamic, we were all asked to stay indoors as much as possible.
+    I thought that I should try a little. I tried to go through some videos on the internet, tried some applications.
+    I came to know about a thing or two about Guitars.
+    </p>
+
+    <p>
+        I do not say that I've some significant knowledge of music or that all should learn from me.
+        <br/>
+        This is what I know about the string instrument.
+        <ul>
+            <li>Most common guitar around me are acoustic.</li>
+            <li>Acoustic guitars generally have 6 strings.</li>
+            <li>Strings are arranged in order of their thickness.</li>
+            <li>Thicker strings tend to produce vibrations at lower frequencies.</li>
+            <li>Most of the beginners (myself included) start with tuning their instrument.</li>
+            <li>Most common tuning is EADGBe (from thickest string to thinnest)</li>
+            <li>The letters in above points are called notes</li>
+            <li>Western music represents music in these notes.</li>
+            <li>Notes are denoted by letters A B C D E F G.</li>
+            <li>Other than B & E, other notes have another colleague (half step higher) A# C# D# F# G#.</li>
+            <li>All notes can be written in increasing order of frequencies as A A# B C C# D D# E F F# G G#.</li>
+            <li>When you run out of letters but still go higher, the cycle starts all over again. This is called an octave (8th note).</li>
+            <li>Each note of the higher octave has double the frequency.</li>
+            <li>Most prominent frequency of a note can be calculated using expression 220 * 2 ^ (x/12)</li>
+        </ul>
+    </p>
+    <p>
+        I tried to create the fret board of the guitar on screen using basic html, css and javascript and got below results.
+        <br/>
+        You may click on individual notes of each string (each column) to hear a sine wave of most prominent frequency.
+    </p>
+    <section id="btnSection">
+        Could not initialize
+        <br>
+        Does your browser support webAudio ??
+    </section>
+    <p>
+        You may feel this does not sound anything like a real guitar.
+        <br/>
+        Yes, you are right, while creating this applet. I came accross multiple research papers with more information.
+        <br/>
+        I'll try to update applet soon with the information that I've gained freshly.
+    </p>
+    <p>
+        If you like this attempt and would like to connect, reach out to me at twitter.com/113mant.
+    </p>
+    <script>
+        var baseNotes = ['A','A#','B','C','C#','D','D#','E','F','F#','G','G#'];
+
+        // standard tuning E A D G B e
+        var tuning = ['E','A','D','G','B','E'];
+        var baseFreq = [  55 * Math.pow(2, baseNotes.indexOf(tuning[0])/12),
+                         110 * Math.pow(2, baseNotes.indexOf(tuning[1])/12),
+                         110 * Math.pow(2, baseNotes.indexOf(tuning[2])/12),
+                         110 * Math.pow(2, baseNotes.indexOf(tuning[3])/12),
+                         220 * Math.pow(2, baseNotes.indexOf(tuning[4])/12),
+                         220 * Math.pow(2, baseNotes.indexOf(tuning[5])/12),
+                       ]
+        var audioCtx = new AudioContext();
+        var oscillators = [];
+        if(!!audioCtx){//} && audioCtx.destination){
+            var btnSection = document.getElementById('btnSection');
+            PopulateNotes(btnSection);
+        }
+
+        function PopulateNotes(node) {
+            node.innerHTML = '';
+            // six strings 
+            // 21 notes for each string (open + 20 frets)
+            for(let i = 0; i < 6; i++) {
+                let reset = document.createElement('button');
+                    reset.innerHTML = '&#8635;';
+                    reset.classList.add(`string${i}`);
+                    reset.setAttribute('data-traget',`string${i}group`);
+                    reset.addEventListener('click',function() {
+                        let elements = [...document.getElementsByName(`string${i}group`)];
+                            elements.filter((e) => e.checked).forEach(element => {
+                                element.checked = false;
+                            });
+                        if(oscillators[i]){
+                            oscillators[i].stop();
+                        }
+                    }, false);
+                node.appendChild(reset);
+                let name = `string${i}`;
+                for(let j = 0; j < 21; j++) {
+                    let noteIndex = (baseNotes.indexOf(tuning[i]) + j) % baseNotes.length;
+                    let radioBtn = document.createElement('input');
+                        radioBtn.setAttribute('type','radio');
+                        radioBtn.setAttribute('name',`string${i}group`);
+                        radioBtn.setAttribute('data-r',`${j}`);
+                        radioBtn.setAttribute('data-c',`${i}`);
+                        radioBtn.setAttribute('id',`s${i}-${j}`);
+                        radioBtn.value = baseNotes[noteIndex];
+
+                        radioBtn.addEventListener('click',function(s) {
+                            console.log(s.target);
+                            if(s.target.checked){
+                                let oscillator = audioCtx.createOscillator();
+                            
+                                oscillator.type = 'sine';
+                                oscillator.frequency.setValueAtTime(baseFreq[i] * Math.pow(2,j/12),audioCtx.currentTime);
+                                oscillator.connect(audioCtx.destination);
+                                if(oscillators[i] && oscillators[i].length){
+                                    oscillators[i].stop();
+                                }
+                                oscillators[i] = oscillator;
+                                oscillator.start();
+                            }
+                        },false);
+
+                    let btnLabel = document.createElement('label');
+                        btnLabel.setAttribute('for',`s${i}-${j}`);
+                        btnLabel.innerText = baseNotes[noteIndex];
+                    let div = document.createElement('div');
+                        div.classList.add('fretNote');
+                        div.classList.add(`string${i}`);
+                    div.appendChild(radioBtn);
+                    div.appendChild(btnLabel);
+                    node.appendChild(div);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
