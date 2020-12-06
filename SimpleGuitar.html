@@ -155,7 +155,7 @@
                                 oscillator.type = 'sine';
                                 oscillator.frequency.setValueAtTime(baseFreq[i] * Math.pow(2,j/12),audioCtx.currentTime);
                                 oscillator.connect(audioCtx.destination);
-                                if(oscillators[i] && oscillators[i].length){
+                                if(oscillators[i]) {
                                     oscillators[i].stop();
                                 }
                                 oscillators[i] = oscillator;
